@@ -7,8 +7,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# 不再使用 git submodule（本地无法稳定初始化），改为在 CI 中显式 clone 指定 tag 的原生依赖。
-# 这样不依赖 superproject 记录 gitlink，构建更可靠。
+# 不使用 git submodule（本地无法稳定初始化），改为显式 clone 指定 tag 的原生依赖。
+# 不使用 ./gradlew（仓库缺 Unix 版 gradlew 脚本），改用 gradle/actions/setup-gradle 直接装 Gradle 8.5。
 
 jobs:
   build-debug:
@@ -44,11 +44,13 @@ jobs:
       - name: Install NDK
         run: sdkmanager "ndk;26.1.10909125"
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.5"
 
       - name: Assemble Debug APK
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -88,12 +90,17 @@ jobs:
       - name: Install NDK
         run: sdkmanager "ndk;26.1.10909125"
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.5"
+
       - name: Decode keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ github.workspace }}/release-key.jks
 
       - name: Assemble Release APK
-        run: ./gradlew assembleRelease
+        run: gradle assembleRelease
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/release-key.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
