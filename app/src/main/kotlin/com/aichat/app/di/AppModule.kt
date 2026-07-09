@@ -47,12 +47,18 @@ object AppModule {
         if (initialized) return
         val ctx = context.applicationContext
 
-        // 原生库加载顺序：llama -> llama-android -> whisper
-        // 原生库加载：库不存在时静默跳过，App 正常运行（纯 Kotlin 模式）
-        runCatching { System.loadLibrary("llama") }
-        runCatching { System.loadLibrary("llama-android") }
-        runCatching { System.loadLibrary("whisper") }
-        runCatching { System.loadLibrary("whisper-android-bridge") }
+        // 原生库加载：用全路径 System.load 比 loadLibrary 更可靠
+        val nativeDir = ctx.applicationInfo.nativeLibraryDir
+        val libs = listOf("llama", "llama-android", "whisper", "whisper-android-bridge")
+        for (lib in libs) {
+            val loaded = runCatching {
+                System.load("$nativeDir/lib$lib.so")
+                true
+            }.getOrDefault(false)
+            if (!loaded) {
+                android.util.Log.w("AppModule", "原生库加载失败: lib$lib.so")
+            }
+        }
 
         settingsRepository = SettingsRepository(ctx)
         assetExtractor = AssetExtractor(ctx.assets)

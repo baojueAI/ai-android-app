@@ -179,37 +179,3 @@ Java_com_aichat_app_jni_llama_Llama_freeModel(JNIEnv* /*env*/, jclass /*clazz*/,
     if (handle->model) llama_model_free(handle->model);
     delete handle;
 }
-
-// ============================================================================
-// JNI_OnLoad：显式注册 native 方法，确保在所有 Android ROM（含华为）上兼容
-// ============================================================================
-static const JNINativeMethod gMethods[] = {
-    { "createModel",
-      "(Ljava/lang/String;IIFF)J",
-      reinterpret_cast<void*>(Java_com_aichat_app_jni_llama_Llama_createModel) },
-    { "generate",
-      "(JLjava/lang/String;Lcom/aichat/app/jni/llama/Llama$TokenCallback;FFI)V",
-      reinterpret_cast<void*>(Java_com_aichat_app_jni_llama_Llama_generate) },
-    { "stop",
-      "(J)V",
-      reinterpret_cast<void*>(Java_com_aichat_app_jni_llama_Llama_stop) },
-    { "freeModel",
-      "(J)V",
-      reinterpret_cast<void*>(Java_com_aichat_app_jni_llama_Llama_freeModel) },
-};
-
-extern "C" JNIEXPORT jint JNICALL
-JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
-    JNIEnv* env = nullptr;
-    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
-        return JNI_ERR;
-    }
-    jclass clazz = env->FindClass("com/aichat/app/jni/llama/Llama");
-    if (!clazz) {
-        return JNI_ERR;
-    }
-    if (env->RegisterNatives(clazz, gMethods, sizeof(gMethods) / sizeof(gMethods[0])) != JNI_OK) {
-        return JNI_ERR;
-    }
-    return JNI_VERSION_1_6;
-}

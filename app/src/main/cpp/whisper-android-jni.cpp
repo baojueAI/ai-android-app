@@ -124,34 +124,3 @@ Java_com_aichat_app_jni_whisper_Whisper_free(JNIEnv* /*env*/, jclass /*clazz*/, 
     if (handle->ctx) whisper_free(handle->ctx);
     delete handle;
 }
-
-// ============================================================================
-// JNI_OnLoad：显式注册 native 方法，确保在所有 Android ROM 上兼容
-// ============================================================================
-static const JNINativeMethod gMethods[] = {
-    { "create",
-      "(Ljava/lang/String;)J",
-      reinterpret_cast<void*>(Java_com_aichat_app_jni_whisper_Whisper_create) },
-    { "transcribeNative",
-      "(J[FLcom/aichat/app/jni/whisper/Whisper$SegmentCallback;)V",
-      reinterpret_cast<void*>(Java_com_aichat_app_jni_whisper_Whisper_transcribeNative) },
-    { "free",
-      "(J)V",
-      reinterpret_cast<void*>(Java_com_aichat_app_jni_whisper_Whisper_free) },
-};
-
-extern "C" JNIEXPORT jint JNICALL
-JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
-    JNIEnv* env = nullptr;
-    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
-        return JNI_ERR;
-    }
-    jclass clazz = env->FindClass("com/aichat/app/jni/whisper/Whisper");
-    if (!clazz) {
-        return JNI_ERR;
-    }
-    if (env->RegisterNatives(clazz, gMethods, sizeof(gMethods) / sizeof(gMethods[0])) != JNI_OK) {
-        return JNI_ERR;
-    }
-    return JNI_VERSION_1_6;
-}
