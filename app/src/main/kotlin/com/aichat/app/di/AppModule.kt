@@ -1,4 +1,4 @@
-package com.aichat.app.di
+﻿package com.aichat.app.di
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -48,10 +48,10 @@ object AppModule {
         val ctx = context.applicationContext
 
         // 原生库加载顺序：llama -> llama-android -> whisper
-        // （与 JNI 伴侣对象一致；System.loadLibrary 对重复加载幂等，无副作用）
-        System.loadLibrary("llama")
-        System.loadLibrary("llama-android")
-        System.loadLibrary("whisper")
+        // 原生库加载：库不存在时静默跳过，App 正常运行（纯 Kotlin 模式）
+        runCatching { System.loadLibrary("llama") }
+        runCatching { System.loadLibrary("llama-android") }
+        runCatching { System.loadLibrary("whisper") }
 
         settingsRepository = SettingsRepository(ctx)
         assetExtractor = AssetExtractor(ctx.assets)
@@ -145,3 +145,5 @@ internal class SettingsViewModelFactory(
         return SettingsViewModel(settingsRepository = settingsRepository) as T
     }
 }
+
+
