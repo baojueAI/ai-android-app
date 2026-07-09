@@ -187,6 +187,47 @@ class ModelManager(context: Context) {
         }
     }
 
+
+    /**
+     * 从 SAF URI 复制模型文件到内部目录（适用于文件选择器场景）。
+     * @return true 如果复制成功
+     */
+    fun copyFromUri(context: Context, uri: android.net.Uri, fileName: String): Boolean {
+        val modelsDir = File(filesDir, ModelPaths.ASSETS_MODELS_DIR).apply { mkdirs() }
+        val destFile = File(modelsDir, fileName)
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(destFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            return destFile.exists() && destFile.length() > 0
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    /** 检查模型文件是否已存在于内部目录。 */
+    fun isModelReady(fileName: String): Boolean {
+        return File(File(filesDir, ModelPaths.ASSETS_MODELS_DIR), fileName).exists()
+    }
+
+    /** 获取内部目录中模型文件的大小（字节），0 表示不存在。 */
+    fun getModelSize(fileName: String): Long {
+        val f = File(File(filesDir, ModelPaths.ASSETS_MODELS_DIR), fileName)
+        return if (f.exists()) f.length() else 0L
+    }
+
+    /** 获取模型内部目录路径。 */
+    fun getModelsDir(): String {
+        return File(filesDir, ModelPaths.ASSETS_MODELS_DIR).absolutePath
+    }
+
+    /** 获取预期模型文件的完整路径。 */
+    fun getExpectedPath(fileName: String): String {
+        return File(File(filesDir, ModelPaths.ASSETS_MODELS_DIR), fileName).absolutePath
+    }
+
     private companion object {
         val MODEL_VERSION = intPreferencesKey("model_version")
     }
