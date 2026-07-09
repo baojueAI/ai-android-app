@@ -129,7 +129,7 @@ class ChatViewModel(
             // 实时音频片段暂未用于中间显示，传空回调
             speechEngine.startRecording { /* 实时片段未使用 */ }
             _uiState.update { it.copy(isRecording = true) }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             _uiState.update { it.copy(error = AppError.TranscriptionFailed(e.message ?: "无法启动录音")) }
         }
     }
@@ -145,7 +145,7 @@ class ChatViewModel(
                     is Result.Ok -> _uiState.update { it.copy(inputText = res.value) }
                     is Result.Err -> _uiState.update { it.copy(error = res.error) }
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 _uiState.update {
                     it.copy(
                         isRecording = false,
@@ -179,7 +179,7 @@ class ChatViewModel(
                 speechEngine.load(locations.whisperPath)
                 ragEngine.load()
                 _uiState.update { it.copy(modelReady = true, loadProgress = 100) }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 _uiState.update {
                     it.copy(
                         error = AppError.ModelLoadFailed(e.message ?: "模型加载失败"),

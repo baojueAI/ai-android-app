@@ -44,9 +44,11 @@ class Whisper private constructor(
     companion object {
         init {
             // 按统一顺序加载原生库。目标名与 CMakeLists.txt 中的 add_library 名称一致。
-            System.loadLibrary("llama")
-            System.loadLibrary("llama-android")
-            System.loadLibrary("whisper-android-bridge")
+            runCatching {
+                System.loadLibrary("llama")
+                System.loadLibrary("llama-android")
+                System.loadLibrary("whisper-android-bridge")
+            }
         }
 
         /**

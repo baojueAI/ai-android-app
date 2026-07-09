@@ -52,6 +52,7 @@ object AppModule {
         runCatching { System.loadLibrary("llama") }
         runCatching { System.loadLibrary("llama-android") }
         runCatching { System.loadLibrary("whisper") }
+        runCatching { System.loadLibrary("whisper-android-bridge") }
 
         settingsRepository = SettingsRepository(ctx)
         assetExtractor = AssetExtractor(ctx.assets)

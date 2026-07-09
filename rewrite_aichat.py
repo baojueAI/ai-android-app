@@ -1,4 +1,5 @@
-package com.aichat.app
+﻿path = r"C:\Users\ASUS\Documents\Codex\2026-07-09\new-chat\ai-android-app\app\src\main\kotlin\com\aichat\app\AiChatApp.kt"
+content = """package com.aichat.app
 
 import android.app.Application
 import com.aichat.app.di.AppModule
@@ -35,3 +36,7 @@ class AiChatApp : Application() {
         const val MODEL_VERSION = 1
     }
 }
+"""
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(content)
+print("AiChatApp.kt rewritten OK")

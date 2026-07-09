@@ -23,9 +23,11 @@ class Llama private constructor() {
         init {
             // 加载顺序：llama -> llama-android -> whisper-android-bridge
             // 目标名必须与 CMakeLists.txt 中的 add_library 名称完全一致
-            System.loadLibrary("llama")
-            System.loadLibrary("llama-android")
-            System.loadLibrary("whisper-android-bridge")
+            runCatching {
+                System.loadLibrary("llama")
+                System.loadLibrary("llama-android")
+                System.loadLibrary("whisper-android-bridge")
+            }
         }
 
         /**
