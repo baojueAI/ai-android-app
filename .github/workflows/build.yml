@@ -7,15 +7,30 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# 不再使用 git submodule（本地无法稳定初始化），改为在 CI 中显式 clone 指定 tag 的原生依赖。
+# 这样不依赖 superproject 记录 gitlink，构建更可靠。
+
 jobs:
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (含 submodule)
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      - name: Fetch native deps (llama.cpp / whisper.cpp)
+        run: |
+          for i in 1 2 3; do
+            git clone --depth 1 --branch b3975 https://github.com/ggerganov/llama.cpp.git app/src/main/cpp/third-party/llama.cpp && break
+            echo "llama.cpp clone failed (attempt $i), retrying..."; sleep 5
+          done
+          for i in 1 2 3; do
+            git clone --depth 1 --branch v1.6.1 https://github.com/ggerganov/whisper.cpp.git app/src/main/cpp/third-party/whisper.cpp && break
+            echo "whisper.cpp clone failed (attempt $i), retrying..."; sleep 5
+          done
+          echo "=== verify ==="
+          test -f app/src/main/cpp/third-party/llama.cpp/CMakeLists.txt && echo "llama.cpp OK" || (echo "llama.cpp MISSING"; exit 1)
+          test -f app/src/main/cpp/third-party/whisper.cpp/CMakeLists.txt && echo "whisper.cpp OK" || (echo "whisper.cpp MISSING"; exit 1)
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -47,10 +62,19 @@ jobs:
     needs: build-debug
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (含 submodule)
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      - name: Fetch native deps (llama.cpp / whisper.cpp)
+        run: |
+          for i in 1 2 3; do
+            git clone --depth 1 --branch b3975 https://github.com/ggerganov/llama.cpp.git app/src/main/cpp/third-party/llama.cpp && break
+            echo "llama.cpp clone failed (attempt $i), retrying..."; sleep 5
+          done
+          for i in 1 2 3; do
+            git clone --depth 1 --branch v1.6.1 https://github.com/ggerganov/whisper.cpp.git app/src/main/cpp/third-party/whisper.cpp && break
+            echo "whisper.cpp clone failed (attempt $i), retrying..."; sleep 5
+          done
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
