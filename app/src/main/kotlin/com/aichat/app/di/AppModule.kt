@@ -48,16 +48,13 @@ object AppModule {
         val ctx = context.applicationContext
 
         // 原生库加载：用全路径 System.load 比 loadLibrary 更可靠
+        // 单库加载：aichat-core 包含所有 llama+whisper+JNI 桥接（静态链接），
+        // 无外部依赖，消除跨库兼容问题
         val nativeDir = ctx.applicationInfo.nativeLibraryDir
-        val libs = listOf("llama", "llama-android", "whisper", "whisper-android-bridge")
-        for (lib in libs) {
-            val loaded = runCatching {
-                System.load("$nativeDir/lib$lib.so")
-                true
-            }.getOrDefault(false)
-            if (!loaded) {
-                android.util.Log.w("AppModule", "原生库加载失败: lib$lib.so")
-            }
+        runCatching {
+            System.loadLibrary("aichat-core")
+        }.onFailure {
+            android.util.Log.w("AppModule", "aichat-core 加载失败: ${it.message}")
         }
 
         settingsRepository = SettingsRepository(ctx)
