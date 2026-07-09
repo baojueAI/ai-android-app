@@ -182,7 +182,7 @@ class ChatViewModel(
             } catch (e: Throwable) {
                 _uiState.update {
                     it.copy(
-                        error = AppError.ModelLoadFailed(e.message ?: "模型加载失败"),
+                        error = AppError.ModelLoadFailed(e.javaClass.simpleName + ": " + (e.message ?: "模型加载失败")),
                         modelReady = false,
                         loadProgress = 0
                     )
