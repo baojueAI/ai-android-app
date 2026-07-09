@@ -1,5 +1,10 @@
 name: Build Android
 
+# 串行化：新推送排队等待，不取消正在运行/排队的构建（避免被并发触发 cancel）
+concurrency:
+  group: android-build
+  cancel-in-progress: false
+
 on:
   push:
     branches: [main]
