@@ -1,14 +1,11 @@
-package com.aichat.app.jni.whisper
+﻿package com.aichat.app.jni.whisper
 
 /**
  * whisper.cpp 的 JNI 桥接门面类。
  *
- * 所有 `external fun` 方法名必须与
- * `app/src/main/cpp/whisper-android-jni.cpp` 中的
- * `Java_com_aichat_app_jni_whisper_Whisper_*` 函数**逐字一致**。
- *
- * 注意：native 库 [whisper] 由 [com.aichat.app.jni.llama.Llama] 伴侣对象统一加载，
- * 本类不再重复加载，避免加载顺序问题。
+ * 所有 external fun 方法名必须与
+ * app/src/main/cpp/whisper-android-jni.cpp 中的
+ * Java_com_aichat_app_jni_whisper_Whisper_* 函数**逐字一致**。
  */
 class Whisper private constructor(
     private val nativePtr: Long,
@@ -46,12 +43,10 @@ class Whisper private constructor(
 
     companion object {
         init {
-            // 与应用统一的加载顺序（幂等）。
-            // 即使 Whisper 先于 Llama 被使用，也保证 llama / llama-android / whisper 就绪，
-            // 避免单独调用 Whisper 时出现 UnsatisfiedLinkError。
+            // 按统一顺序加载原生库。目标名与 CMakeLists.txt 中的 add_library 名称一致。
             System.loadLibrary("llama")
             System.loadLibrary("llama-android")
-            System.loadLibrary("whisper")
+            System.loadLibrary("whisper-android-bridge")
         }
 
         /**
@@ -72,7 +67,7 @@ class Whisper private constructor(
         /** 便捷加载：失败抛异常。 */
         fun load(path: String): Whisper {
             val ptr = create(path)
-            require(ptr != 0L) { "加载 Whisper 模型失败：$path" }
+            require(ptr != 0L) { "加载 Whisper 模型失败：" + path }
             return Whisper(ptr, path)
         }
     }

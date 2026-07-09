@@ -4,12 +4,12 @@
  * llama.cpp 的 JNI 桥接门面类。
  *
  * **加载顺序（必须严格遵守）**：先加载底层 [llama]，再加载本桥 [llama-android]，
- * 最后加载 [whisper]（whisper 在当前批由 Llama 统一触发加载，避免分散）。
+ * 最后加载 [whisper-android-bridge]。
  * 顺序与 [Model] / [Whisper] 中的 native 方法所依赖的 native 库一致。
  *
- * 所有 `external fun` 的方法名必须与
- * `app/src/main/cpp/llama-android-jni.cpp` 中的
- * `Java_com_aichat_app_jni_llama_Llama_*` 函数**逐字一致**。
+ * 所有 external fun 的方法名必须与
+ * pp/src/main/cpp/llama-android-jni.cpp 中的
+ * Java_com_aichat_app_jni_llama_Llama_* 函数**逐字一致**。
  */
 class Llama private constructor() {
 
@@ -21,10 +21,11 @@ class Llama private constructor() {
 
     companion object {
         init {
-            // 加载顺序：llama -> llama-android -> whisper
+            // 加载顺序：llama -> llama-android -> whisper-android-bridge
+            // 目标名必须与 CMakeLists.txt 中的 add_library 名称完全一致
             System.loadLibrary("llama")
             System.loadLibrary("llama-android")
-            System.loadLibrary("whisper")
+            System.loadLibrary("whisper-android-bridge")
         }
 
         /**

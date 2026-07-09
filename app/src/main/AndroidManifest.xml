@@ -5,6 +5,15 @@
     <!-- 录音权限：用于端侧语音对话（whisper.cpp） -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- 存储权限：读取 Download 目录中的模型文件（Phi-3 GGUF / whisper ggml） -->
+    <!-- Android 12 及以下：传统存储权限 -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Android 11+：管理所有文件权限（访问 Download 目录需要） -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
     <!-- 麦克风特性（不强制要求，无麦克风设备仍可使用文本对话） -->
     <uses-feature
         android:name="android.hardware.microphone"
@@ -22,6 +31,7 @@
         android:theme="@style/Theme.AIChatApp"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:requestLegacyExternalStorage="true"
         tools:targetApi="34">
 
         <activity
@@ -37,4 +47,3 @@
     </application>
 
 </manifest>
-

@@ -44,3 +44,6 @@ captures/
 # 第三方大模型权重（不入库，体积过大）
 app/src/main/assets/models/*.gguf
 app/src/main/assets/models/*.bin
+
+# Third-party native libs (cloned by build)
+app/src/main/cpp/third-party/

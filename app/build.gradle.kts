@@ -20,12 +20,14 @@ android {
             useSupportLibrary = true
         }
 
-        // 鍘熺敓鏋勫缓浠呬繚鐣欏父鐢?ABI锛屽噺灏忎綋绉?
-
-        // Room Schema 浣嶇疆锛坋xportSchema = false锛屾棤闇€瀵煎嚭 schema锛屾晠姝ゅ鐣欑┖锛?
+        // 只构建 64 位 ARM（现代手机均为 arm64-v8a，且 llama.cpp 依赖较新的 NEON 指令集）
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
     }
 
-    // 鍘熺敓锛圕++/JNI锛夋瀯寤洪厤缃?
+    // 指定 NDK 版本（26.x 含 clang 17+，支持所有 llama.cpp 需要的 ARM 内联汇编）
+    ndkVersion = "26.1.10909125"
 
     buildTypes {
         release {
@@ -35,7 +37,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // 绛惧悕閰嶇疆鐢?CI / 鏈湴 local.properties 娉ㄥ叆锛堝闇€鏈湴绛惧悕鍙嚜琛屾坊鍔?signingConfig锛?
         }
         debug {
             isMinifyEnabled = false
@@ -47,12 +48,18 @@ android {
         }
     }
 
-    // gguf / bin 涓哄凡鍘嬬缉妯″瀷鏂囦欢锛岀姝?aapt 浜屾鍘嬬缉
+    // gguf / bin 为已压缩模型文件，禁止 aapt 二次压缩
     aaptOptions {
         noCompress.addAll(listOf("gguf", "bin"))
     }
 
-    // 淇濈暀 jniLibs 鍘熸湁鎵撳寘鏂瑰紡锛堜笉浣跨敤 legacy 鍏煎鍖咃級
+    // 原生构建配置
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
     packaging {
         jniLibs {
             useLegacyPackaging = false
@@ -83,7 +90,7 @@ android {
 }
 
 dependencies {
-    // Compose BOM锛堢粺涓€绠＄悊 Compose 鐗堟湰锛?
+    // Compose BOM
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
 
     implementation("androidx.compose.ui:ui")
@@ -91,45 +98,44 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
-    // 鎵╁睍鍥炬爣
+    // 扩展图标
     implementation("androidx.compose.material:material-icons-extended")
 
     // Activity + Compose
     implementation("androidx.activity:activity-compose:1.9.0")
 
-    // ViewModel / Lifecycle锛圕ompose 闆嗘垚锛?
+    // ViewModel / Lifecycle
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
 
-    // 鏍稿績 KTX
+    // 核心 KTX
     implementation("androidx.core:core-ktx:1.13.1")
 
-    // 鍗忕▼
+    // 协程
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
 
-    // DataStore锛堝亸濂借缃寔涔呭寲锛?
+    // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // 瀵艰埅
+    // 导航
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
-    // Room锛圞SP 娉ㄨВ澶勭悊锛?
+    // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
 
-    // Markdown 娓叉煋锛堝璇濆唴瀹癸級
+    // Markdown 渲染
     implementation("com.github.jeziellago:compose-markdown:0.5.0")
 
-    // 绯荤粺鏍忥紙鐘舵€佹爮/瀵艰埅鏍忥級棰滆壊鎺у埗
+    // 系统栏颜色控制
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.34.0")
 
-    // Material AndroidX 搴擄細鎻愪緵 XML 骞冲彴涓婚 Theme.Material3.DayNight.NoActionBar
-    // 锛堜緵 AndroidManifest 鐨?android:theme 浣跨敤锛汣ompose 渚т粛浣跨敤 AIChatTheme锛?
+    // Material AndroidX 库
     implementation("com.google.android.material:material:1.12.0")
 
-    // 棰勮 / 宸ュ叿
+    // 预览 / 工具
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

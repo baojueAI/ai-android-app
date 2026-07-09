@@ -9,12 +9,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 project("aichat-native" CXX)
 
 # 引入第三方推理引擎（git submodule）
-#
-# 注意：llama.cpp 与 whisper.cpp 各自携带一份 ggml，同时 add_subdirectory 会导致
-# CMake 报 "add_library cannot create imported target 'ggml'" 目标重名错误。
-#
-# 修复方案：在添加 whisper.cpp 之前设置 GGML_STANDALONE=OFF，让其跳过自身 ggml 构建，
-# 直接复用 llama.cpp 已提供的 ggml 库。二者 API 兼容，链接无冲突。
 add_subdirectory(third-party/llama.cpp)
 set(GGML_STANDALONE OFF)
 add_subdirectory(third-party/whisper.cpp)
@@ -25,8 +19,8 @@ add_subdirectory(third-party/whisper.cpp)
 add_library(llama-android SHARED llama-android-jni.cpp)
 
 target_include_directories(llama-android PRIVATE
-        ${CMAKE_SOURCE_DIR}/third-party/llama.cpp/include
-        ${CMAKE_SOURCE_DIR}/third-party/llama.cpp/common)
+        /third-party/llama.cpp/include
+        /third-party/llama.cpp/common)
 
 target_compile_options(llama-android PRIVATE -Wall -Wextra)
 
@@ -37,17 +31,18 @@ target_link_libraries(llama-android
         log)
 
 # ============================================================
-# ASR 桥（whisper）：调用 whisper.cpp 完成语音转写
+# ASR 桥（whisper-android-bridge）：调用 whisper.cpp 完成语音转写
+# 注意：目标名不能与 whisper.cpp 内部定义的 whisper 库重名
 # ============================================================
-add_library(whisper SHARED whisper-android-jni.cpp)
+add_library(whisper-android-bridge SHARED whisper-android-jni.cpp)
 
-target_include_directories(whisper PRIVATE
-        ${CMAKE_SOURCE_DIR}/third-party/whisper.cpp/include
-        ${CMAKE_SOURCE_DIR}/third-party/whisper.cpp)
+target_include_directories(whisper-android-bridge PRIVATE
+        /third-party/whisper.cpp/include
+        /third-party/whisper.cpp)
 
-target_compile_options(whisper PRIVATE -Wall -Wextra)
+target_compile_options(whisper-android-bridge PRIVATE -Wall -Wextra)
 
-target_link_libraries(whisper
+target_link_libraries(whisper-android-bridge
         whisper
         ggml
         android
