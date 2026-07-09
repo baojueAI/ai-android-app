@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        应用主题：基于 Material3 的 DayNight 无 ActionBar 主题。
+        状态栏 / 导航栏设为透明，配合 enableEdgeToEdge() 与 AIChatTheme
+        中的 systemUiController 实现沉浸式体验。
+    -->
+    <style name="Theme.AIChatApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+</resources>

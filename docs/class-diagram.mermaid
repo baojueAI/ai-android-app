@@ -1,0 +1,306 @@
+classDiagram
+    %% ============ UI / ViewModel ============
+    class ChatUiState {
+        +List~ChatMessage~ messages
+        +Boolean isGenerating
+        +Boolean canStop
+        +String inputText
+        +LoadStatus loadStatus
+        +AppError? error
+    }
+    class Settings {
+        +Float temperature
+        +Int maxTokens
+        +String modelName
+        +Boolean darkMode
+        +Boolean networkFallback
+    }
+    class ChatViewModel {
+        -StateFlow~ChatUiState~ _uiState
+        -StateFlow~Settings~ _settings
+        +StateFlow~ChatUiState~ uiState
+        +sendText(text: String)
+        +startVoiceInput()
+        +stopVoiceInput()
+        +stopGeneration()
+        +loadHistory()
+        +onInputChanged(text: String)
+    }
+    class SettingsViewModel {
+        +updateTemperature(v: Float)
+        +updateMaxTokens(v: Int)
+        +toggleDarkMode()
+        +toggleNetworkFallback()
+    }
+
+    %% ============ 领域模型 ============
+    class ChatMessage {
+        +String id
+        +String sessionId
+        +Role role
+        +String content
+        +Long createdAt
+        +MessageStatus status
+    }
+    class Role {
+        <<enum>>
+        System
+        User
+        Assistant
+    }
+    class Session {
+        +String id
+        +String title
+        +Long updatedAt
+    }
+    class LlmParams {
+        +Float temperature
+        +Float topP
+        +Int maxTokens
+        +Int nCtx
+        +Int nThreads
+        +List~String~ stop
+    }
+    class GenerationState {
+        <<enum>>
+        Idle
+        Generating
+        Stopped
+        Error
+    }
+    class KnowledgeChunk {
+        +String id
+        +String text
+        +Float score
+    }
+    class AppError {
+        <<sealed>>
+        +ModelLoadFailed(msg)
+        +AssetCopyFailed(msg)
+        +InferenceFailed(msg)
+        +TranscriptionFailed(msg)
+        +RagLoadFailed(msg)
+    }
+
+    %% ============ Repository ============
+    class ChatRepository {
+        <<interface>>
+        +sendMessage(sessionId, history, params, onToken)
+        +transcribe(audio: ByteArray): String
+        +retrieve(query, topK): List~KnowledgeChunk~
+        +saveMessage(msg: ChatMessage)
+        +getMessages(sessionId): List~ChatMessage~
+        +getSessions(): List~Session~
+    }
+    class ChatRepositoryImpl {
+        -LlmEngine llm
+        -SpeechEngine speech
+        -RagEngine rag
+        -SessionDao sessionDao
+        -MessageDao messageDao
+        +sendMessage(...)
+        +transcribe(audio): String
+        +retrieve(query, topK)
+        +saveMessage(msg)
+    }
+    class SettingsRepository {
+        <<interface>>
+        +getSettings(): Flow~Settings~
+        +setTemperature(v)
+        +setNetworkFallback(b)
+    }
+
+    %% ============ 端侧引擎接口 ============
+    class LlmEngine {
+        <<interface>>
+        +load(path: String, params: LlmParams)
+        +generate(messages: List~ChatMessage~, params: LlmParams, onToken: (String)->Unit)
+        +stop()
+        +unload()
+    }
+    class SpeechEngine {
+        <<interface>>
+        +load(path: String)
+        +startRecording(onSegment: (String)->Unit)
+        +stopRecording(): ByteArray
+        +transcribe(audio: ByteArray): String
+    }
+    class RagEngine {
+        <<interface>>
+        +load()
+        +retrieve(query: String, topK: Int): List~KnowledgeChunk~
+    }
+
+    %% ============ 引擎实现 ============
+    class LlmEngineImpl {
+        -Model model
+        -Chat chat
+        -Sampler sampler
+        -Boolean stopped
+        +load(path, params)
+        +generate(messages, params, onToken)
+        +stop()
+    }
+    class SpeechEngineImpl {
+        -Whisper whisper
+        -AudioRecorder recorder
+        +load(path)
+        +startRecording(onSegment)
+        +stopRecording(): ByteArray
+        +transcribe(audio): String
+    }
+    class AudioRecorder {
+        +start(onPcm: (ByteArray)->Unit)
+        +stop(): ByteArray
+        +isRecording: Boolean
+    }
+    class RagEngineImpl {
+        -InvertedIndex index
+        +load()
+        +retrieve(query, topK): List~KnowledgeChunk~
+    }
+    class InvertedIndex {
+        -Map~String, List~Posting~~ postings
+        -Map~String, String~ docs
+        +build(docs: Map~String,String~)
+        +search(query: String, topK: Int): List~KnowledgeChunk~
+        -bm25(tf, df, N, dl, avgdl): Float
+    }
+
+    %% ============ 模型管理 ============
+    class ModelManager {
+        -AssetExtractor extractor
+        +init(context)
+        +getLlamaPath(): String
+        +getWhisperPath(): String
+        +copyIfNeeded(onProgress: (Int)->Unit)
+    }
+    class AssetExtractor {
+        +copyAssetFile(name, dest, onProgress)
+        +isCopied(name): Boolean
+    }
+
+    %% ============ Room ============
+    class ChatDatabase {
+        <<RoomDatabase>>
+        +sessionDao(): SessionDao
+        +messageDao(): MessageDao
+    }
+    class SessionDao {
+        <<interface>>
+        +insert(session: SessionEntity)
+        +getSessions(): List~SessionEntity~
+    }
+    class MessageDao {
+        <<interface>>
+        +insert(msg: MessageEntity)
+        +getBySession(sessionId): List~MessageEntity~
+    }
+    class SessionEntity {
+        +String id
+        +String title
+        +Long updatedAt
+    }
+    class MessageEntity {
+        +String id
+        +String sessionId
+        +Int role
+        +String content
+        +Long createdAt
+        +Int status
+    }
+
+    %% ============ JNI 封装 ============
+    class Llama {
+        <<JNI wrapper>>
+        +loadLibrary()
+        +createContext(model, params): Long
+    }
+    class Model {
+        +loadFromFilePath(path: String, mmap: Boolean): Model
+        +nCtx(): Int
+    }
+    class Chat {
+        +addSystem(msg: String)
+        +addUser(msg: String)
+        +addAssistant(msg: String)
+        +reset()
+    }
+    class Sampler {
+        +temperature(v: Float)
+        +topP(v: Float)
+        +maxTokens(v: Int)
+    }
+    class Token {
+        +toPiece(model: Model, tokenId: Int): String
+    }
+    class Whisper {
+        +load(path: String): Whisper
+        +decode(audio: ByteArray): WhisperResult
+    }
+    class WhisperResult {
+        +List~WhisperSegment~ segments
+        +text(): String
+    }
+    class WhisperSegment {
+        +Int tid
+        +String text
+        +Float tStart
+        +Float tEnd
+    }
+
+    %% ============ 装配 ============
+    class AppModule {
+        +chatRepository: ChatRepository
+        +settingsRepository: SettingsRepository
+        +chatViewModel(): ChatViewModel
+        +settingsViewModel(): SettingsViewModel
+    }
+    class AiChatApp {
+        +appModule: AppModule
+    }
+    class MainActivity {
+        +onCreate()
+    }
+
+    %% ===== 关系 =====
+    ChatViewModel ..> ChatRepository : uses
+    ChatViewModel ..> SettingsRepository : reads
+    SettingsViewModel ..> SettingsRepository : updates
+    ChatViewModel ..> ChatUiState : exposes
+    ChatViewModel ..> Settings : observes
+    ChatRepository <|.. ChatRepositoryImpl
+    ChatRepositoryImpl ..> LlmEngine
+    ChatRepositoryImpl ..> SpeechEngine
+    ChatRepositoryImpl ..> RagEngine
+    ChatRepositoryImpl ..> SessionDao
+    ChatRepositoryImpl ..> MessageDao
+    ChatRepositoryImpl ..> ChatMessage
+    LlmEngine <|.. LlmEngineImpl
+    SpeechEngine <|.. SpeechEngineImpl
+    RagEngine <|.. RagEngineImpl
+    LlmEngineImpl ..> Model
+    LlmEngineImpl ..> Chat
+    LlmEngineImpl ..> Sampler
+    LlmEngineImpl ..> Token
+    LlmEngineImpl ..> Llama
+    SpeechEngineImpl ..> Whisper
+    SpeechEngineImpl ..> WhisperResult
+    SpeechEngineImpl ..> WhisperSegment
+    SpeechEngineImpl ..> AudioRecorder
+    RagEngineImpl ..> InvertedIndex
+    RagEngineImpl ..> KnowledgeChunk
+    ModelManager ..> AssetExtractor
+    ChatRepositoryImpl ..> ModelManager : via engine load
+    ChatDatabase *-- SessionDao
+    ChatDatabase *-- MessageDao
+    SessionDao ..> SessionEntity
+    MessageDao ..> MessageEntity
+    AppModule ..> ChatRepositoryImpl
+    AppModule ..> ChatViewModel
+    AppModule ..> SettingsViewModel
+    AppModule ..> LlmEngineImpl
+    AppModule ..> SpeechEngineImpl
+    AppModule ..> RagEngineImpl
+    AiChatApp ..> AppModule : builds
+    MainActivity ..> ChatViewModel : obtains

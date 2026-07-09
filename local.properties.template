@@ -1,0 +1,9 @@
+# 本地配置文件模板：复制为 local.properties 并填入本机路径
+# 注意：local.properties 已被 .gitignore 忽略，不会提交到仓库
+
+# Android SDK 路径（必填）
+sdk.dir=/path/to/Android/Sdk
+
+# NDK 版本需与 app/build.gradle.kts 中一致（26.1.10909125）
+# 如需自定义 NDK 路径可在此添加：
+# ndk.dir=/path/to/Android/Sdk/ndk/26.1.10909125

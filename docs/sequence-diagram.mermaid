@@ -1,0 +1,95 @@
+%% ============ 4.1 一次文字对话（流式） ============
+sequenceDiagram
+    autonumber
+    actor User
+    participant UI as ChatScreen/InputBar
+    participant VM as ChatViewModel
+    participant Repo as ChatRepositoryImpl
+    participant RAG as RagEngineImpl
+    participant LLM as LlmEngineImpl
+    participant JNI as Model/Chat/Sampler
+    participant DB as Room(MessageDao)
+
+    User->>UI: 输入文本并点击发送
+    UI->>VM: sendText(text)
+    VM->>VM: 创建 User ChatMessage(status=Sending)
+    VM->>Repo: saveMessage(userMsg)
+    Repo->>DB: insert(userMsg)
+    VM->>VM: uiState 追加 user 消息
+    VM->>Repo: sendMessage(sessionId, history, params, onToken)
+    Repo->>RAG: retrieve(query, topK=3)
+    RAG-->>Repo: List<KnowledgeChunk>
+    Repo->>Repo: 拼装 system 提示词(含RAG上下文)
+    Repo->>LLM: generate(messages, params, onToken)
+    LLM->>JNI: Model.load + Chat.add* + Sampler 设定
+    loop 每个生成的 token
+        LLM->>JNI: llama_decode → token_to_piece
+        JNI-->>LLM: piece(String)
+        LLM-->>Repo: onToken(piece)
+        Repo-->>VM: onToken(piece)
+        VM->>VM: 追加到 assistant 消息.content
+        VM-->>UI: uiState 更新(StateFlow)
+        UI->>UI: MessageBubble 增量渲染(Markdown)
+    end
+    LLM-->>Repo: 生成结束(EOS 或 达 maxTokens 或 stopped)
+    Repo->>DB: insert(assistantMsg, status=Done)
+    VM-->>UI: isGenerating=false, canStop=false
+
+%% ============ 4.2 一次语音输入（转写回填） ============
+sequenceDiagram
+    autonumber
+    actor User
+    participant UI as InputBar(麦克风)
+    participant VM as ChatViewModel
+    participant SE as SpeechEngineImpl
+    participant AR as AudioRecorder
+    participant WH as Whisper JNI
+
+    User->>UI: 按住/点击麦克风开始说话
+    UI->>VM: startVoiceInput()
+    VM->>SE: startRecording(onSegment)
+    SE->>AR: 开始采集 16kHz/16bit/单声道 PCM
+    AR-->>SE: onPcm(chunk)（实时波形可选）
+    User->>UI: 松开/再次点击结束
+    UI->>VM: stopVoiceInput()
+    VM->>SE: stopRecording()
+    SE->>AR: 停止并返回 audioBytes(wav)
+    AR-->>SE: audioBytes
+    SE->>WH: transcribe(audioBytes)
+    WH-->>SE: WhisperResult(segments)
+    SE-->>VM: onTranscribed(text)
+    VM->>VM: inputText = text（待用户确认）
+    VM-->>UI: 输入框显示转写文本
+    Note over User,UI: 用户确认后点击发送 → 进入 4.1 文字对话流程
+
+%% ============ 4.3 启动加载（assets→内部存储→mmap 加载→就绪） ============
+sequenceDiagram
+    autonumber
+    participant App as AiChatApp
+    participant MM as ModelManager
+    participant AE as AssetExtractor
+    participant DS as DataStore(模型版本)
+    participant LLM as LlmEngineImpl
+    participant SE as SpeechEngineImpl
+    participant RAG as RagEngineImpl
+
+    App->>MM: init(context)
+    MM->>AE: copyAssetsIfNeeded()
+    AE->>DS: 读取已拷贝模型版本号
+    alt 版本缺失或变更
+        AE->>AE: 流式拷贝 assets/models/* → filesDir/models
+        AE->>DS: 记录已拷贝版本
+        AE-->>MM: onProgress(0~100%)
+        MM-->>App: 进度 → ViewModel 显示进度条
+    else 已是最新
+        AE-->>MM: 跳过拷贝
+    end
+    MM-->>App: 模型路径就绪
+    App->>LLM: load(llamaPath, nCtx=4096, nThreads)
+    LLM->>LLM: System.loadLibrary("llama") → ("llama-android")
+    LLM->>LLM: Model.loadFromFilePath(mmap=true)
+    App->>SE: load(whisperPath)
+    SE->>SE: Whisper.load(ggml-base.bin)
+    App->>RAG: load()
+    RAG->>RAG: 读 assets/knowledge/*.md 构建倒排索引(BM25)
+    App-->>App: 通知 ViewModel loadStatus=Ready

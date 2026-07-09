@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- 当前为空：暂不排除任何文件。如需跳过大型模型，可在后续补充 exclude 规则。 -->
+</full-backup-content>

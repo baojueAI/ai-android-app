@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 对话气泡（白色） -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M30,28h48c6.6,0 12,5.4 12,12v26c0,6.6 -5.4,12 -12,12H52l-16,14v-14H30c-6.6,0 -12,-5.4 -12,-12V40c0,-6.6 5.4,-12 12,-12z" />
+    <!-- 三个对话点（品牌紫） -->
+    <path android:fillColor="#6C5CE7" android:pathData="M40,48m-4,0a4,4 0 1,1 8,0a4,4 0 1,1 -8,0" />
+    <path android:fillColor="#6C5CE7" android:pathData="M54,48m-4,0a4,4 0 1,1 8,0a4,4 0 1,1 -8,0" />
+    <path android:fillColor="#6C5CE7" android:pathData="M68,48m-4,0a4,4 0 1,1 8,0a4,4 0 1,1 -8,0" />
+</vector>

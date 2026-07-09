@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用名（Manifest / 顶栏共用） -->
+    <string name="app_name">AI 对话</string>
+
+    <!-- 标题 -->
+    <string name="title_settings">设置</string>
+
+    <!-- 无障碍描述 -->
+    <string name="cd_back">返回</string>
+    <string name="cd_settings">设置</string>
+    <string name="cd_mic">语音输入</string>
+    <string name="cd_send">发送</string>
+    <string name="cd_stop">停止生成</string>
+
+    <!-- 聊天页 -->
+    <string name="empty_chat_hint">和离线 AI 助手开始对话吧～</string>
+    <string name="input_placeholder">输入消息，或点击麦克风语音输入</string>
+    <string name="action_retry">重试</string>
+    <string name="model_loading">模型加载中… %d%%</string>
+
+    <!-- 设置页 -->
+    <string name="label_model_info">模型信息</string>
+    <string name="model_info_sub">Phi-3-mini 4K 指令版（端侧 Q4_K_M 量化）</string>
+    <string name="label_temperature">采样温度</string>
+    <string name="label_max_tokens">最大生成 Token</string>
+    <string name="label_dark_mode">深色模式</string>
+    <string name="dark_system">跟随系统</string>
+    <string name="dark_light">浅色</string>
+    <string name="dark_dark">深色</string>
+    <string name="label_network_fallback">联网兜底</string>
+    <string name="network_fallback_desc">仅在端侧无答案时尝试联网（默认关闭）</string>
+    <string name="label_knowledge">知识库版本</string>
+    <string name="knowledge_version_value">随包内置 · assets/knowledge</string>
+
+    <!-- 权限 -->
+    <string name="permission_mic_denied">未授予麦克风权限，仍可继续使用文字对话</string>
+</resources>
