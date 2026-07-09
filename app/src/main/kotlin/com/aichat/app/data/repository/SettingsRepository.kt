@@ -1,6 +1,11 @@
 ﻿package com.aichat.app.data.repository
 
 import android.content.Context
+import android.net.Uri
+import com.aichat.app.config.ModelPaths
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
@@ -40,6 +45,27 @@ class SettingsRepository(private val context: Context) {
     suspend fun setDarkMode(mode: Int) = ds.edit { it[DARK_MODE] = mode }
     suspend fun setNetworkFallback(enabled: Boolean) = ds.edit { it[NETWORK_FALLBACK] = enabled }
     suspend fun setModelVersion(version: Int) = ds.edit { it[MODEL_VERSION] = version }
+
+    /**
+     * 从系统文件选择器返回的 [Uri] 拷贝模型文件到应用私有目录 models/，
+     * 并以 [targetName]（如 Phi-3-mini-4K-Instruct-Q4_K_M.gguf）命名，供 ModelManager 自动发现。
+     * 无需申请存储权限（SAF 已授权该 Uri 的读取）。
+     */
+    suspend fun importModelFromUri(uri: Uri, targetName: String) {
+        val destDir = File(context.filesDir, ModelPaths.ASSETS_MODELS_DIR).apply { mkdirs() }
+        val dest = File(destDir, targetName)
+        val input = context.contentResolver.openInputStream(uri)
+            ?: throw IOException("无法打开所选文件：$uri")
+        input.use { src ->
+            FileOutputStream(dest).use { out ->
+                val buf = ByteArray(64 * 1024)
+                var read: Int
+                while (src.read(buf).also { read = it } != -1) {
+                    out.write(buf, 0, read)
+                }
+            }
+        }
+    }
 
     companion object {
         private val TEMPERATURE = floatPreferencesKey("temperature")

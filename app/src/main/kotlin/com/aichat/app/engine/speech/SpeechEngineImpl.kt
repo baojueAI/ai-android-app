@@ -18,7 +18,7 @@ class SpeechEngineImpl(
     private val dispatcher: CoroutineContext = Dispatchers.Default.limitedParallelism(1)
 ) : SpeechEngine {
 
-    private var whisper: Whisper? = null
+    private var whisper: Whisper.Handle? = null
     @Volatile private var recorder: AudioRecorder? = null
     private var recordingJob: kotlinx.coroutines.Job? = null
 

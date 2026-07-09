@@ -3,6 +3,9 @@
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aichat.app.data.repository.SettingsRepository
+import android.net.Uri
+import com.aichat.app.config.ModelPaths
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.StateFlow
@@ -55,5 +58,22 @@ class SettingsViewModel(private val settingsRepository: SettingsRepository) : Vi
     /** 设置联网兜底开关（默认关闭）。 */
     fun setNetworkFallback(value: Boolean) {
         viewModelScope.launch { settingsRepository.setNetworkFallback(value) }
+    }
+
+    /** 从系统选择器导入语言模型（.gguf）。 */
+    fun importLlamaModel(uri: Uri) = importModel(uri, ModelPaths.LLAMA_MODEL_FILE, "语言模型")
+
+    /** 从系统选择器导入语音模型（.bin）。 */
+    fun importWhisperModel(uri: Uri) = importModel(uri, ModelPaths.WHISPER_MODEL_FILE, "语音模型")
+
+    private fun importModel(uri: Uri, targetName: String, label: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update { it.copy(importStatus = ImportStatus.Importing(label)) }
+            runCatching { settingsRepository.importModelFromUri(uri, targetName) }
+                .onSuccess { _uiState.update { it.copy(importStatus = ImportStatus.Success(label)) } }
+                .onFailure { e ->
+                    _uiState.update { it.copy(importStatus = ImportStatus.Error(e.message ?: "导入失败")) }
+                }
+        }
     }
 }

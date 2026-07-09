@@ -71,7 +71,7 @@ static llama_token sample_token(struct llama_context* ctx, float temperature, fl
 // ----------------------------------------------------------------------------
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_aichat_app_jni_llama_Llama_createModel(
-        JNIEnv* env, jclass /*clazz*/, jstring modelPath, jint nCtx,
+        JNIEnv* env, jobject /*thiz*/, jstring modelPath, jint nCtx,
         jint nThreads, jfloat temperature, jfloat topP) {
     llama_backend_init();
 
@@ -104,7 +104,7 @@ Java_com_aichat_app_jni_llama_Llama_createModel(
 // ----------------------------------------------------------------------------
 extern "C" JNIEXPORT void JNICALL
 Java_com_aichat_app_jni_llama_Llama_generate(
-        JNIEnv* env, jclass /*clazz*/, jlong modelPtr, jstring prompt,
+        JNIEnv* env, jobject /*thiz*/, jlong modelPtr, jstring prompt,
         jobject callback, jfloat temperature, jfloat topP, jint maxTokens) {
     auto* handle = reinterpret_cast<LlamaHandle*>(modelPtr);
     if (!handle || !handle->ctx || !callback) return;
@@ -163,7 +163,7 @@ Java_com_aichat_app_jni_llama_Llama_generate(
 // 停止生成
 // ----------------------------------------------------------------------------
 extern "C" JNIEXPORT void JNICALL
-Java_com_aichat_app_jni_llama_Llama_stop(JNIEnv* /*env*/, jclass /*clazz*/, jlong modelPtr) {
+Java_com_aichat_app_jni_llama_Llama_stop(JNIEnv* /*env*/, jobject /*thiz*/, jlong modelPtr) {
     auto* handle = reinterpret_cast<LlamaHandle*>(modelPtr);
     if (handle) handle->stop.store(true);
 }
@@ -172,7 +172,7 @@ Java_com_aichat_app_jni_llama_Llama_stop(JNIEnv* /*env*/, jclass /*clazz*/, jlon
 // 释放模型与上下文
 // ----------------------------------------------------------------------------
 extern "C" JNIEXPORT void JNICALL
-Java_com_aichat_app_jni_llama_Llama_freeModel(JNIEnv* /*env*/, jclass /*clazz*/, jlong modelPtr) {
+Java_com_aichat_app_jni_llama_Llama_freeModel(JNIEnv* /*env*/, jobject /*thiz*/, jlong modelPtr) {
     auto* handle = reinterpret_cast<LlamaHandle*>(modelPtr);
     if (!handle) return;
     if (handle->ctx) llama_free(handle->ctx);

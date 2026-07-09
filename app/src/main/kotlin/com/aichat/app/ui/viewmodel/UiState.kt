@@ -38,5 +38,19 @@ data class SettingsUiState(
     val maxTokens: Int = SettingsRepository.DEFAULT_MAX_TOKENS,
     val darkMode: Int = SettingsRepository.DARK_MODE_SYSTEM,
     val networkFallback: Boolean = false,
-    val modelName: String = ModelPaths.LLAMA_MODEL_FILE
+    val modelName: String = ModelPaths.LLAMA_MODEL_FILE,
+    /** 模型文件导入状态（Idle/导入中/成功/失败）。 */
+    val importStatus: ImportStatus = ImportStatus.Idle
 )
+
+/** 模型文件从系统选择器导入的状态机。 */
+sealed interface ImportStatus {
+    /** 空闲（未导入）。 */
+    object Idle : ImportStatus
+    /** 正在导入某个模型（label 为中文名，如“语言模型”）。 */
+    data class Importing(val label: String) : ImportStatus
+    /** 导入成功。 */
+    data class Success(val label: String) : ImportStatus
+    /** 导入失败，携带原因。 */
+    data class Error(val message: String) : ImportStatus
+}

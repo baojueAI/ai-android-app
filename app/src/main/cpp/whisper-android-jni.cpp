@@ -63,7 +63,7 @@ static void new_segment_callback(struct whisper_context* ctx, struct whisper_sta
 // 加载模型
 // ----------------------------------------------------------------------------
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_aichat_app_jni_whisper_Whisper_create(JNIEnv* env, jclass /*clazz*/, jstring path) {
+Java_com_aichat_app_jni_whisper_Whisper_create(JNIEnv* env, jobject /*thiz*/, jstring path) {
     auto* handle = new (std::nothrow) WhisperHandle();
     if (!handle) return 0L;
 
@@ -81,7 +81,7 @@ Java_com_aichat_app_jni_whisper_Whisper_create(JNIEnv* env, jclass /*clazz*/, js
 // ----------------------------------------------------------------------------
 extern "C" JNIEXPORT void JNICALL
 Java_com_aichat_app_jni_whisper_Whisper_transcribeNative(
-        JNIEnv* env, jclass /*clazz*/, jlong ptr, jfloatArray samples, jobject callback) {
+        JNIEnv* env, jobject /*thiz*/, jlong ptr, jfloatArray samples, jobject callback) {
     auto* handle = reinterpret_cast<WhisperHandle*>(ptr);
     if (!handle || !handle->ctx) return;
 
@@ -118,7 +118,7 @@ Java_com_aichat_app_jni_whisper_Whisper_transcribeNative(
 // 释放模型
 // ----------------------------------------------------------------------------
 extern "C" JNIEXPORT void JNICALL
-Java_com_aichat_app_jni_whisper_Whisper_free(JNIEnv* /*env*/, jclass /*clazz*/, jlong ptr) {
+Java_com_aichat_app_jni_whisper_Whisper_free(JNIEnv* /*env*/, jobject /*thiz*/, jlong ptr) {
     auto* handle = reinterpret_cast<WhisperHandle*>(ptr);
     if (!handle) return;
     if (handle->ctx) whisper_free(handle->ctx);

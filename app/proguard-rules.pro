@@ -35,3 +35,10 @@
 -keep @androidx.annotation.Keep class * { *; }
 -keepclasseswithmembers class * { @androidx.annotation.Keep <methods>; }
 -keepclasseswithmembers class * { @androidx.annotation.Keep <fields>; }
+
+# 保留全部 JNI 桥接类（防止类名被混淆导致 JNI 查找失败）
+-keep class com.aichat.app.jni.** { *; }
+# 保留 native 方法声明（防止方法名被混淆导致 JNI 查找失败）
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
