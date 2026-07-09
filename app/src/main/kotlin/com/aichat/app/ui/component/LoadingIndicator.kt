@@ -1,4 +1,4 @@
-package com.aichat.app.ui.component
+﻿package com.aichat.app.ui.component
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -35,7 +35,7 @@ fun ThinkingDots(modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "thinking")
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         repeat(3) { index ->
-            val alpha by transition.animateFloat(
+            val alpha = transition.animateFloat(
                 initialValue = 0.3f,
                 targetValue = 1f,
                 animationSpec = infiniteRepeatable(
@@ -47,7 +47,7 @@ fun ThinkingDots(modifier: Modifier = Modifier) {
             Surface(
                 color = MaterialTheme.colorScheme.primary,
                 shape = CircleShape,
-                modifier = Modifier.size(8.dp).alpha(alpha)
+                modifier = Modifier.size(8.dp).alpha(alpha.value)
             ) { }
         }
     }
@@ -92,3 +92,4 @@ private fun ThinkingDotsPreview() {
         ThinkingDots()
     }
 }
+

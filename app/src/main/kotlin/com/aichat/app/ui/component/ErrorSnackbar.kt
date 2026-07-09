@@ -1,4 +1,4 @@
-package com.aichat.app.ui.component
+﻿package com.aichat.app.ui.component
 
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -28,11 +28,12 @@ fun ErrorSnackbar(
     onRetry: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(error) {
         if (error == null) return@LaunchedEffect
         val result = snackbarHostState.showSnackbar(
             message = errorMessage(error),
-            actionLabel = stringResource(id = R.string.action_retry),
+            actionLabel = context.getString(R.string.action_retry),
             duration = SnackbarDuration.Long
         )
         when (result) {
@@ -50,3 +51,4 @@ private fun errorMessage(error: AppError): String = when (error) {
     is AppError.TranscriptionFailed -> "语音识别失败：${error.message}"
     is AppError.RagLoadFailed -> "知识库加载失败：${error.message}"
 }
+

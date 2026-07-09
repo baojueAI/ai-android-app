@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
@@ -20,23 +20,12 @@ android {
             useSupportLibrary = true
         }
 
-        // 原生构建仅保留常用 ABI，减小体积
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-        }
+        // 鍘熺敓鏋勫缓浠呬繚鐣欏父鐢?ABI锛屽噺灏忎綋绉?
 
-        // Room Schema 位置（exportSchema = false，无需导出 schema，故此处留空）
+        // Room Schema 浣嶇疆锛坋xportSchema = false锛屾棤闇€瀵煎嚭 schema锛屾晠姝ゅ鐣欑┖锛?
     }
 
-    // 原生（C++/JNI）构建配置
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-            // 使用 libc++ 共享 STL（与 submodule 中 ggml 保持一致）
-            arguments += listOf("-DANDROID_STL=c++_shared")
-        }
-    }
+    // 鍘熺敓锛圕++/JNI锛夋瀯寤洪厤缃?
 
     buildTypes {
         release {
@@ -46,7 +35,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // 签名配置由 CI / 本地 local.properties 注入（如需本地签名可自行添加 signingConfig）
+            // 绛惧悕閰嶇疆鐢?CI / 鏈湴 local.properties 娉ㄥ叆锛堝闇€鏈湴绛惧悕鍙嚜琛屾坊鍔?signingConfig锛?
         }
         debug {
             isMinifyEnabled = false
@@ -58,12 +47,12 @@ android {
         }
     }
 
-    // gguf / bin 为已压缩模型文件，禁止 aapt 二次压缩
+    // gguf / bin 涓哄凡鍘嬬缉妯″瀷鏂囦欢锛岀姝?aapt 浜屾鍘嬬缉
     aaptOptions {
-        noCompress += listOf("gguf", "bin")
+        noCompress.addAll(listOf("gguf", "bin"))
     }
 
-    // 保留 jniLibs 原有打包方式（不使用 legacy 兼容包）
+    // 淇濈暀 jniLibs 鍘熸湁鎵撳寘鏂瑰紡锛堜笉浣跨敤 legacy 鍏煎鍖咃級
     packaging {
         jniLibs {
             useLegacyPackaging = false
@@ -94,7 +83,7 @@ android {
 }
 
 dependencies {
-    // Compose BOM（统一管理 Compose 版本）
+    // Compose BOM锛堢粺涓€绠＄悊 Compose 鐗堟湰锛?
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
 
     implementation("androidx.compose.ui:ui")
@@ -102,45 +91,45 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
-    // 扩展图标
+    // 鎵╁睍鍥炬爣
     implementation("androidx.compose.material:material-icons-extended")
 
     // Activity + Compose
     implementation("androidx.activity:activity-compose:1.9.0")
 
-    // ViewModel / Lifecycle（Compose 集成）
+    // ViewModel / Lifecycle锛圕ompose 闆嗘垚锛?
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
 
-    // 核心 KTX
+    // 鏍稿績 KTX
     implementation("androidx.core:core-ktx:1.13.1")
 
-    // 协程
+    // 鍗忕▼
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
 
-    // DataStore（偏好设置持久化）
+    // DataStore锛堝亸濂借缃寔涔呭寲锛?
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // 导航
+    // 瀵艰埅
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
-    // Room（KSP 注解处理）
+    // Room锛圞SP 娉ㄨВ澶勭悊锛?
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
 
-    // Markdown 渲染（对话内容）
+    // Markdown 娓叉煋锛堝璇濆唴瀹癸級
     implementation("com.github.jeziellago:compose-markdown:0.5.0")
 
-    // 系统栏（状态栏/导航栏）颜色控制
+    // 绯荤粺鏍忥紙鐘舵€佹爮/瀵艰埅鏍忥級棰滆壊鎺у埗
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.34.0")
 
-    // Material AndroidX 库：提供 XML 平台主题 Theme.Material3.DayNight.NoActionBar
-    // （供 AndroidManifest 的 android:theme 使用；Compose 侧仍使用 AIChatTheme）
+    // Material AndroidX 搴擄細鎻愪緵 XML 骞冲彴涓婚 Theme.Material3.DayNight.NoActionBar
+    // 锛堜緵 AndroidManifest 鐨?android:theme 浣跨敤锛汣ompose 渚т粛浣跨敤 AIChatTheme锛?
     implementation("com.google.android.material:material:1.12.0")
 
-    // 预览 / 工具
+    // 棰勮 / 宸ュ叿
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

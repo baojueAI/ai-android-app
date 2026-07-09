@@ -79,7 +79,7 @@ fun MessageBubble(
 @Composable
 private fun BlinkingCursor(modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "cursor")
-    val alpha by transition.animateFloat(
+    val alpha = transition.animateFloat(
         initialValue = 1f,
         targetValue = 0.2f,
         animationSpec = infiniteRepeatable(
@@ -91,7 +91,7 @@ private fun BlinkingCursor(modifier: Modifier = Modifier) {
     Text(
         text = "▍",
         style = MaterialTheme.typography.bodyLarge,
-        modifier = modifier.alpha(alpha)
+        modifier = modifier.alpha(alpha.value)
     )
 }
 
