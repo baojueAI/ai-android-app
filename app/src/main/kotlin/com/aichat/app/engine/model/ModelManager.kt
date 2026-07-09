@@ -1,25 +1,26 @@
-package com.aichat.app.engine.model
+﻿package com.aichat.app.engine.model
 
 import android.content.Context
+import android.os.Build
+import android.os.Environment
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.aichat.app.config.ModelPaths
 import com.aichat.app.data.repository.dataStore
 import kotlinx.coroutines.flow.first
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 /**
- * 模型管理器：负责在首启时将 assets 中的模型文件拷贝到
- * `filesDir/models/`，并通过 DataStore 记录模型版本号，仅在版本变化或文件缺失时重拷。
+ * 模型管理器：按以下顺序寻找模型文件——
+ * 1. 应用内部目录 filesDir/models/
+ * 2. 手机下载目录 Download/
  *
- * 若模型文件已直接存在于 `filesDir/models/`（例如用户自行放置或首次联网拉取），
- * 则跳过拷贝步骤直接返回其绝对路径。
- *
- * @param context 应用上下文
+ * 从 Download 找到后会自动复制到内部目录供后续使用。
  */
 class ModelManager(context: Context) {
 
-    /** LLM 与 ASR 模型的绝对路径。 */
     data class ModelLocations(
         val llamaPath: String,
         val whisperPath: String
@@ -29,13 +30,6 @@ class ModelManager(context: Context) {
     private val dataStore = context.dataStore
     private val filesDir = context.filesDir
 
-    /**
-     * 确保模型就绪并返回其绝对路径。
-     *
-     * @param version 当前期望的模型版本号；与 DataStore 中记录不一致则触发拷贝
-     * @param onProgress 进度回调（0..100），来自两次拷贝进度的归并
-     * @throws IllegalStateException 当模型文件最终仍不存在（未下载/未放入 assets）
-     */
     suspend fun ensureModels(
         version: Int,
         onProgress: suspend (Int) -> Unit = {}
@@ -48,31 +42,69 @@ class ModelManager(context: Context) {
         val needCopy = storedVersion != version || !llamaFile.exists() || !whisperFile.exists()
 
         if (needCopy) {
-            if (assetExtractor.assetExists(ModelPaths.ASSETS_MODELS_DIR, ModelPaths.LLAMA_MODEL_FILE)) {
-                assetExtractor.extract(
-                    "${ModelPaths.ASSETS_MODELS_DIR}/${ModelPaths.LLAMA_MODEL_FILE}",
-                    llamaFile
-                ).collect { onProgress((it * 50) / 100) }
+            var progress = 0
+
+            // 方案1：从 APK assets 中提取（开发者打包模型进 APK 时使用）
+            if (!llamaFile.exists()) {
+                if (assetExtractor.assetExists(ModelPaths.ASSETS_MODELS_DIR, ModelPaths.LLAMA_MODEL_FILE)) {
+                    assetExtractor.extract(
+                        "${ModelPaths.ASSETS_MODELS_DIR}/${ModelPaths.LLAMA_MODEL_FILE}",
+                        llamaFile
+                    ).collect { onProgress(it / 2) }
+                    progress = 50
+                }
+            } else { progress = 50 }
+
+            if (!whisperFile.exists()) {
+                if (assetExtractor.assetExists(ModelPaths.ASSETS_MODELS_DIR, ModelPaths.WHISPER_MODEL_FILE)) {
+                    assetExtractor.extract(
+                        "${ModelPaths.ASSETS_MODELS_DIR}/${ModelPaths.WHISPER_MODEL_FILE}",
+                        whisperFile
+                    ).collect { onProgress(50 + it / 2) }
+                }
             }
-            if (assetExtractor.assetExists(ModelPaths.ASSETS_MODELS_DIR, ModelPaths.WHISPER_MODEL_FILE)) {
-                assetExtractor.extract(
-                    "${ModelPaths.ASSETS_MODELS_DIR}/${ModelPaths.WHISPER_MODEL_FILE}",
-                    whisperFile
-                ).collect { onProgress(50 + (it * 50) / 100) }
+
+            // 方案2：从手机 Download 目录复制（用户自行下载时使用）
+            if (!llamaFile.exists()) {
+                copyFromDownload(ModelPaths.LLAMA_MODEL_FILE, llamaFile)
+                onProgress(60)
             }
+            if (!whisperFile.exists()) {
+                copyFromDownload(ModelPaths.WHISPER_MODEL_FILE, whisperFile)
+                onProgress(100)
+            }
+
             dataStore.edit { it[MODEL_VERSION] = version }
         } else {
             onProgress(100)
         }
 
         if (!llamaFile.exists() || !whisperFile.exists()) {
+            val missing = mutableListOf<String>()
+            if (!llamaFile.exists()) missing.add(ModelPaths.LLAMA_MODEL_FILE)
+            if (!whisperFile.exists()) missing.add(ModelPaths.WHISPER_MODEL_FILE)
             throw IllegalStateException(
-                "模型文件缺失：${llamaFile.absolutePath} / ${whisperFile.absolutePath}。" +
-                    "请将 ${ModelPaths.LLAMA_MODEL_FILE} 与 ${ModelPaths.WHISPER_MODEL_FILE} " +
-                    "放入 assets/models/ 或应用的 filesDir/models/ 目录（见 assets/models/README.md）。"
+                "模型文件缺失：${missing.joinToString("、")}。\n" +
+                "请把下载好的模型文件放到手机「下载」文件夹，然后重新打开 App。"
             )
         }
         return ModelLocations(llamaFile.absolutePath, whisperFile.absolutePath)
+    }
+
+    /** 从手机 Download 目录复制模型文件到内部目录 */
+    private fun copyFromDownload(fileName: String, destFile: File) {
+        val downloadDir = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOWNLOADS
+        )
+        val sourceFile = File(downloadDir, fileName)
+        if (!sourceFile.exists()) return
+
+        destFile.parentFile?.mkdirs()
+        FileInputStream(sourceFile).use { input ->
+            FileOutputStream(destFile).use { output ->
+                input.copyTo(output)
+            }
+        }
     }
 
     private companion object {
