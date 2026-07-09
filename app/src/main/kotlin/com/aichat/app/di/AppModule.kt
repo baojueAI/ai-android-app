@@ -50,11 +50,13 @@ object AppModule {
         // 原生库加载：用全路径 System.load 比 loadLibrary 更可靠
         // 单库加载：aichat-core 包含所有 llama+whisper+JNI 桥接（静态链接），
         // 无外部依赖，消除跨库兼容问题
-        val nativeDir = ctx.applicationInfo.nativeLibraryDir
-        runCatching {
+        try {
+            System.loadLibrary("omp")
+        } catch (_: UnsatisfiedLinkError) { }
+        try {
             System.loadLibrary("aichat-core")
-        }.onFailure {
-            android.util.Log.w("AppModule", "aichat-core 加载失败: ${it.message}")
+        } catch (e: UnsatisfiedLinkError) {
+            android.util.Log.e("AppModule", "aichat-core FAILED: " + e.message)
         }
 
         settingsRepository = SettingsRepository(ctx)

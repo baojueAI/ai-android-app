@@ -180,9 +180,13 @@ class ChatViewModel(
                 ragEngine.load()
                 _uiState.update { it.copy(modelReady = true, loadProgress = 100) }
             } catch (e: Throwable) {
+                val detail = e.message?.let { msg ->
+                    if (msg.length > 300) msg.take(300) + "..." else msg
+                } ?: e.javaClass.simpleName
+                android.util.Log.e("ChatViewModel", "loadModel 异常", e)
                 _uiState.update {
                     it.copy(
-                        error = AppError.ModelLoadFailed(e.javaClass.simpleName + ": " + (e.message ?: "模型加载失败")),
+                        error = AppError.ModelLoadFailed(e.javaClass.simpleName + ": " + detail),
                         modelReady = false,
                         loadProgress = 0
                     )
